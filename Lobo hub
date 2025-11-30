@@ -1,391 +1,590 @@
 --[[
-    ╔═══════════════════════════════════════════════════════════╗
-    ║             🔥 LOBOFIRE HUB - SELIWARE EDITION 🔥         ║
-    ║                  Kaitun Otimizado - Blox Fruits           ║
-    ║                  Compatibilidade Máxima para Seliware     ║
-    ╚═══════════════════════════════════════════════════════════╝
-    
-    ⚡ CARACTERÍSTICAS:
-    • Sistema Anti-Ban Avançado (Simplificado)
-    • Farm Completo de Level, Mastery, Boss e Materiais
-    • Interface Gráfica Simplificada
-    • Foco em Compatibilidade com Seliware
-    
-    🚫 EXCLUÍDO: Funções de otimização de FPS e UI complexa para evitar falhas.
+    LB Hub Kaitun v2.0
+    Sistema Avançado de Auto Farm para Blox Fruits
+    Compatível: Seliware (PC) | Delta (Android)
+    Baseado em Banana Hub com otimizações avançadas
 ]]
 
--- Verificação de ambiente
-if not game:IsLoaded() then
-    wait(1) -- Usando wait() simples para máxima compatibilidade
-end
+local LBHub = {}
+LBHub.Version = "2.0"
+LBHub.LoadTime = tick()
 
--- Proteção contra execução múltipla
-if getgenv().LoboFireLoaded then
-    warn("⚠️ LoboFire Hub já está em execução!")
-    return
-end
-getgenv().LoboFireLoaded = true
+-- ════════════════════════════════════════════════════════════════
+-- CONFIGURAÇÕES PRINCIPAIS
+-- ════════════════════════════════════════════════════════════════
 
--- Notificação de carregamento (Simplificada)
-local function Notify(title, text, duration)
-    pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = title,
-            Text = text,
-            Duration = duration or 5,
-            Icon = "rbxassetid://0"
-        })
-    end)
-end
-
-Notify("🔥 LoboFire Hub", "Iniciando carregamento (Seliware Edition)...", 3)
-
--- ═══════════════════════════════════════════════════════════
--- MÓDULO: SISTEMA ANTI-BAN AVANÇADO (Simplificado)
--- ═══════════════════════════════════════════════════════════
-
-local AntiBan = {}
-AntiBan.__index = AntiBan
-
-AntiBan.Config = {
-    MinDelay = 0.5,
-    MaxDelay = 2.5,
+LBHub.Config = {
+    -- Farm Settings
+    AutoFarm = true,
+    AutoFarmLevel = true,
+    AutoFarmMastery = true,
+    AutoFarmBoss = true,
+    AutoSeaEvent = true,
+    AutoElitePirate = true,
+    
+    -- Mastery Farm
+    FarmFruitMastery = true,
+    FarmWeaponMastery = true,
+    FarmGunMastery = false,
+    
+    -- Collection
+    AutoCollectChest = true,
+    AutoCollectFruit = true,
+    
+    -- Anti-Ban System (Avançado)
+    UseAntiBan = true,
+    HumanizedMovement = true,
+    RandomDelays = true,
+    PatternVariation = true,
+    MinDelay = 0.15,
+    MaxDelay = 0.35,
+    
+    -- Performance
+    FastMode = true,
+    OptimizedTween = true,
+    ReduceLag = true,
+    
+    -- Security
     AntiKick = true,
     AntiAfk = true,
+    AntiCheatBypass = true,
+    
+    -- Notifications
+    Notifications = true,
+    WebhookURL = "", -- Discord Webhook (opcional)
 }
 
-AntiBan.LastAction = tick()
-
-function AntiBan:RandomDelay(min, max)
-    min = min or self.Config.MinDelay
-    max = max or self.Config.MaxDelay
-    local delay = min + (math.random() * (max - min))
-    return delay
-end
-
-function AntiBan:Wait(customMin, customMax)
-    local delay = self:RandomDelay(customMin, customMax)
-    wait(delay) -- Usando wait() simples
-    self.LastAction = tick()
-end
-
-function AntiBan:EnableAntiKick()
-    if not self.Config.AntiKick then return end
-    
-    pcall(function()
-        local mt = getrawmetatable(game)
-        local old = mt.__namecall
-        setreadonly(mt, false)
-        
-        mt.__namecall = newcclosure(function(self, ...)
-            local method = getnamecallmethod()
-            if method == "Kick" then
-                return nil
-            end
-            return old(self, ...)
-        end)
-        
-        setreadonly(mt, true)
-    end)
-end
-
-function AntiBan:EnableAntiAfk()
-    if not self.Config.AntiAfk then return end
-    
-    pcall(function()
-        local VirtualUser = game:GetService("VirtualUser")
-        
-        game:GetService("Players").LocalPlayer.Idled:Connect(function()
-            VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new())
-        end)
-    end)
-end
-
-function AntiBan:Initialize()
-    self:EnableAntiKick()
-    self:EnableAntiAfk()
-    print("🔒 Sistema Anti-Ban LoboFire ativado (Seliware Mode)!")
-end
-
--- ═══════════════════════════════════════════════════════════
--- MÓDULO: SISTEMA DE FARM OTIMIZADO (Simplificado)
--- ═══════════════════════════════════════════════════════════
-
-local Farm = {}
-Farm.__index = Farm
+-- ════════════════════════════════════════════════════════════════
+-- VARIÁVEIS GLOBAIS
+-- ════════════════════════════════════════════════════════════════
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 
 local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
-Farm.Config = {
-    Enabled = false,
-    FarmLevel = true,
-    AttackDistance = 25,
-    FastAttack = true,
-    AutoHaki = true,
+LBHub.Stats = {
+    Level = Player.Data.Level.Value,
+    Beli = Player.Data.Beli.Value,
+    Fragments = Player.Data.Fragments.Value,
+    QuestsCompleted = 0,
+    BossesDefeated = 0,
+    FruitsCollected = 0,
+    Runtime = 0,
+    StartTime = tick()
 }
 
-Farm.Status = {
-    CurrentTask = "Aguardando...",
-    CurrentMob = "Nenhum",
-    Level = 0,
-    TimeElapsed = 0,
-}
+LBHub.CurrentTask = "Inicializando..."
+LBHub.IsRunning = false
 
-Farm.MobList = {
-    {Level = 1, Name = "Bandit", Quest = "BanditQuest1"},
-    {Level = 700, Name = "Raider", Quest = "Area1Quest"},
-    {Level = 1500, Name = "Pirate Millionaire", Quest = "PiratePortQuest"},
-    {Level = 2500, Name = "Sun-kissed Warrior", Quest = "TikiQuest2"},
-}
+-- ════════════════════════════════════════════════════════════════
+-- SISTEMA ANTI-BAN AVANÇADO
+-- ════════════════════════════════════════════════════════════════
 
-function Farm:GetCurrentMob()
-    local level = Player.Data.Level.Value
-    local currentMob = self.MobList[1]
-    
-    for _, mob in ipairs(self.MobList) do
-        if level >= mob.Level then
-            currentMob = mob
-        else
-            break
-        end
-    end
-    
-    return currentMob
+LBHub.AntiBan = {}
+
+function LBHub.AntiBan:GetRandomDelay()
+    return math.random(LBHub.Config.MinDelay * 100, LBHub.Config.MaxDelay * 100) / 100
 end
 
-function Farm:ActivateHaki()
-    if not self.Config.AutoHaki then return end
-    
-    pcall(function()
-        if not Player.Character:FindFirstChild("HasBuso") then
-            local args = {[1] = "Buso"}
-            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
-        end
-    end)
-end
-
-function Farm:FastAttack()
-    if not self.Config.FastAttack then return end
-    
-    pcall(function()
-        game:GetService("VirtualUser"):CaptureController()
-        game:GetService("VirtualUser"):ClickButton2(Vector2.new())
-    end)
-end
-
-function Farm:FarmMob(mobData)
-    local mobName = mobData.Name
-    local enemies = workspace.Enemies:GetChildren()
-    
-    for _, enemy in pairs(enemies) do
-        if enemy.Name == mobName and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
-            repeat
-                wait(0.1)
-                
-                if not enemy or not enemy.Parent or enemy.Humanoid.Health <= 0 then
-                    break
-                end
-                
-                pcall(function()
-                    if enemy:FindFirstChild("HumanoidRootPart") and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
-                        local enemyPos = enemy.HumanoidRootPart.Position
-                        local distance = (Player.Character.HumanoidRootPart.Position - enemyPos).Magnitude
-                        
-                        if distance > self.Config.AttackDistance then
-                            Player.Character.HumanoidRootPart.CFrame = CFrame.new(
-                                enemyPos.X,
-                                enemyPos.Y + 10,
-                                enemyPos.Z
-                            )
-                        end
-                        
-                        self:ActivateHaki()
-                        self:FastAttack()
-                        
-                        self.Status.CurrentMob = mobName
-                        self.Status.CurrentTask = "Farmando: " .. mobName
-                    end
-                end)
-                
-                AntiBan:Wait(0.1, 0.3)
-                
-            until not self.Config.Enabled or enemy.Humanoid.Health <= 0
-        end
+function LBHub.AntiBan:HumanizedWait()
+    if LBHub.Config.UseAntiBan and LBHub.Config.RandomDelays then
+        wait(self:GetRandomDelay())
     end
 end
 
-function Farm:StartLevelFarm()
-    -- Usando spawn(function() ... end) com wait() simples
-    spawn(function()
-        while self.Config.Enabled and self.Config.FarmLevel do
-            wait(0.5)
-            
-            self.Status.Level = Player.Data.Level.Value
-            local mobData = self:GetCurrentMob()
-            
-            self:FarmMob(mobData)
-            
-            AntiBan:Wait(1, 2)
-        end
+function LBHub.AntiBan:RandomizeAttackPattern()
+    local patterns = {
+        function() wait(0.1) end,
+        function() wait(0.15) end,
+        function() wait(0.2) end,
+    }
+    patterns[math.random(1, #patterns)]()
+end
+
+function LBHub.AntiBan:AntiKick()
+    Player.Idled:Connect(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
     end)
 end
 
-function Farm:Initialize()
-    print("🔥 Sistema de Farm LoboFire iniciado (Seliware Mode)!")
+function LBHub.AntiBan:Init()
+    if LBHub.Config.AntiKick then
+        self:AntiKick()
+    end
 end
 
--- ═══════════════════════════════════════════════════════════
--- MÓDULO: INTERFACE GRÁFICA (Simplificada)
--- ═══════════════════════════════════════════════════════════
+-- ════════════════════════════════════════════════════════════════
+-- FUNÇÕES DE UTILIDADE
+-- ════════════════════════════════════════════════════════════════
 
-local UI = {}
-UI.__index = UI
+function LBHub:Notify(title, text, duration)
+    if not LBHub.Config.Notifications then return end
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "🐺 LB Hub | " .. title,
+        Text = text,
+        Duration = duration or 5,
+        Icon = "rbxassetid://0"
+    })
+end
 
-local CoreGui = game:GetService("CoreGui")
+function LBHub:GetDistance(pos)
+    if not HumanoidRootPart then return math.huge end
+    return (HumanoidRootPart.Position - pos).Magnitude
+end
 
-UI.Config = {
-    Theme = {
-        Primary = Color3.fromRGB(255, 85, 0),
-        Background = Color3.fromRGB(20, 20, 25),
-        Text = Color3.fromRGB(255, 255, 255),
-    },
-}
+function LBHub:TweenTo(pos, speed)
+    if not HumanoidRootPart then return end
+    
+    local distance = self:GetDistance(pos)
+    local tweenSpeed = speed or (LBHub.Config.FastMode and 350 or 250)
+    
+    local tween = TweenService:Create(
+        HumanoidRootPart,
+        TweenInfo.new(distance / tweenSpeed, Enum.EasingStyle.Linear),
+        {CFrame = pos}
+    )
+    
+    tween:Play()
+    
+    if LBHub.Config.UseAntiBan and LBHub.Config.HumanizedMovement then
+        LBHub.AntiBan:HumanizedWait()
+    end
+    
+    return tween
+end
 
-function UI:CreateMainUI()
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "LoboFireHub"
-    ScreenGui.Parent = CoreGui
-    ScreenGui.ResetOnSpawn = false
-    
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "MainFrame"
-    mainFrame.Parent = ScreenGui
-    mainFrame.BackgroundColor3 = UI.Config.Theme.Background
-    mainFrame.BorderSizePixel = 1
-    mainFrame.BorderColor3 = UI.Config.Theme.Primary
-    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
-    mainFrame.Size = UDim2.new(0, 300, 0, 200)
-    mainFrame.Active = true
-    mainFrame.Draggable = true
-    
-    local title = Instance.new("TextLabel")
-    title.Name = "Title"
-    title.Parent = mainFrame
-    title.BackgroundTransparency = 0
-    title.BackgroundColor3 = UI.Config.Theme.Primary
-    title.Position = UDim2.new(0, 0, 0, 0)
-    title.Size = UDim2.new(1, 0, 0, 30)
-    title.Font = Enum.Font.SourceSansBold
-    title.Text = "🔥 LOBOFIRE HUB (Seliware)"
-    title.TextColor3 = UI.Config.Theme.Text
-    title.TextSize = 14
-    
-    local statusLabel = Instance.new("TextLabel")
-    statusLabel.Name = "Status"
-    statusLabel.Parent = mainFrame
-    statusLabel.BackgroundTransparency = 1
-    statusLabel.Position = UDim2.new(0, 10, 0, 40)
-    statusLabel.Size = UDim2.new(1, -20, 0, 20)
-    statusLabel.Font = Enum.Font.SourceSans
-    statusLabel.Text = "Status: Aguardando..."
-    statusLabel.TextColor3 = UI.Config.Theme.Text
-    statusLabel.TextSize = 12
-    statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local mobLabel = Instance.new("TextLabel")
-    mobLabel.Name = "Mob"
-    mobLabel.Parent = mainFrame
-    mobLabel.BackgroundTransparency = 1
-    mobLabel.Position = UDim2.new(0, 10, 0, 60)
-    mobLabel.Size = UDim2.new(1, -20, 0, 20)
-    mobLabel.Font = Enum.Font.SourceSans
-    mobLabel.Text = "Mob: Nenhum"
-    mobLabel.TextColor3 = UI.Config.Theme.Text
-    statusLabel.TextSize = 12
-    mobLabel.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local startButton = Instance.new("TextButton")
-    startButton.Name = "Start"
-    startButton.Parent = mainFrame
-    startButton.BackgroundColor3 = UI.Config.Theme.Primary
-    startButton.Position = UDim2.new(0.5, -75, 1, -40)
-    startButton.Size = UDim2.new(0, 150, 0, 30)
-    startButton.Font = Enum.Font.SourceSansBold
-    startButton.Text = "▶ INICIAR FARM"
-    startButton.TextColor3 = UI.Config.Theme.Text
-    startButton.TextSize = 14
-    
-    startButton.MouseButton1Click:Connect(function()
-        Farm.Config.Enabled = not Farm.Config.Enabled
-        if Farm.Config.Enabled then
-            startButton.Text = "⏸ PAUSAR FARM"
-            Farm:StartLevelFarm()
-            Notify("🔥 LoboFire", "Farm iniciado!", 3)
-        else
-            startButton.Text = "▶ INICIAR FARM"
-            Notify("⏸ LoboFire", "Farm pausado!", 3)
+function LBHub:EquipWeapon(weaponName)
+    local tool = Player.Backpack:FindFirstChild(weaponName)
+    if tool then
+        Humanoid:EquipTool(tool)
+        wait(0.1)
+    end
+end
+
+function LBHub:GetEnemies()
+    local enemies = {}
+    for _, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
+        if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+            table.insert(enemies, v)
         end
-    end)
+    end
+    return enemies
+end
+
+function LBHub:GetNearestEnemy()
+    local nearestEnemy = nil
+    local shortestDistance = math.huge
     
-    UI.Elements = {
-        Status = statusLabel,
-        Mob = mobLabel,
+    for _, enemy in pairs(self:GetEnemies()) do
+        local distance = self:GetDistance(enemy.HumanoidRootPart.Position)
+        if distance < shortestDistance then
+            shortestDistance = distance
+            nearestEnemy = enemy
+        end
+    end
+    
+    return nearestEnemy
+end
+
+-- ════════════════════════════════════════════════════════════════
+-- SISTEMA DE QUEST
+-- ════════════════════════════════════════════════════════════════
+
+LBHub.Quest = {}
+
+function LBHub.Quest:GetCurrentQuest()
+    local questData = {
+        -- Sea 1
+        {Level = 1, Name = "Bandit", QuestGiver = "BanditQuest1"},
+        {Level = 10, Name = "Monkey", QuestGiver = "JungleQuest"},
+        {Level = 15, Name = "Gorilla", QuestGiver = "JungleQuest"},
+        {Level = 20, Name = "Pirate", QuestGiver = "BuggyQuest1"},
+        {Level = 30, Name = "Brute", QuestGiver = "BuggyQuest1"},
+        {Level = 40, Name = "Desert Bandit", QuestGiver = "DesertQuest"},
+        {Level = 60, Name = "Desert Officer", QuestGiver = "DesertQuest"},
+        {Level = 75, Name = "Snow Bandit", QuestGiver = "SnowQuest"},
+        {Level = 90, Name = "Snowman", QuestGiver = "SnowQuest"},
+        {Level = 100, Name = "Chief Petty Officer", QuestGiver = "MarineQuest2"},
+        {Level = 120, Name = "Sky Bandit", QuestGiver = "SkyQuest"},
+        {Level = 150, Name = "Dark Master", QuestGiver = "SkyQuest"},
+        
+        -- Sea 2
+        {Level = 700, Name = "Raider", QuestGiver = "Area1Quest"},
+        {Level = 775, Name = "Mercenary", QuestGiver = "Area1Quest"},
+        {Level = 850, Name = "Swan Pirate", QuestGiver = "Area2Quest"},
+        {Level = 900, Name = "Marine Commodore", QuestGiver = "MarineQuest3"},
+        {Level = 950, Name = "Pirate Millionaire", QuestGiver = "Area2Quest"},
+        {Level = 1000, Name = "Pistol Billionaire", QuestGiver = "Area2Quest"},
+        
+        -- Sea 3
+        {Level = 1500, Name = "Pirate Millionaire", QuestGiver = "PiratePortQuest"},
+        {Level = 1575, Name = "Pistol Billionaire", QuestGiver = "PiratePortQuest"},
     }
     
-    return ScreenGui
+    local playerLevel = Player.Data.Level.Value
+    local selectedQuest = questData[1]
+    
+    for _, quest in pairs(questData) do
+        if playerLevel >= quest.Level then
+            selectedQuest = quest
+        end
+    end
+    
+    return selectedQuest
 end
 
-function UI:UpdateStatus()
+function LBHub.Quest:Take()
+    local quest = self:GetCurrentQuest()
+    if not quest then return false end
+    
+    local questNPC = game:GetService("Workspace").NPCs:FindFirstChild(quest.QuestGiver)
+    if questNPC then
+        local args = {
+            [1] = "StartQuest",
+            [2] = quest.QuestGiver,
+            [3] = 1
+        }
+        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
+        return true
+    end
+    return false
+end
+
+-- ════════════════════════════════════════════════════════════════
+-- AUTO FARM PRINCIPAL
+-- ════════════════════════════════════════════════════════════════
+
+function LBHub:AutoFarm()
+    if not LBHub.Config.AutoFarm then return end
+    
     spawn(function()
-        while wait(1) do
-            if UI.Elements and Farm.Status then
-                UI.Elements.Status.Text = "Tarefa: " .. Farm.Status.CurrentTask .. " | Nível: " .. Farm.Status.Level
-                UI.Elements.Mob.Text = "Mob: " .. Farm.Status.CurrentMob
-                Farm.Status.TimeElapsed = Farm.Status.TimeElapsed + 1
-            end
+        while LBHub.IsRunning do
+            pcall(function()
+                LBHub.CurrentTask = "Farmando Level"
+                
+                -- Pegar quest
+                if not Player.PlayerGui.Main.Quest.Visible then
+                    LBHub.Quest:Take()
+                    wait(0.5)
+                end
+                
+                -- Atacar inimigos
+                local enemy = self:GetNearestEnemy()
+                if enemy and enemy:FindFirstChild("HumanoidRootPart") then
+                    local enemyPos = enemy.HumanoidRootPart.CFrame
+                    
+                    -- Movimento humanizado
+                    if LBHub.Config.HumanizedMovement then
+                        local offset = Vector3.new(
+                            math.random(-5, 5),
+                            math.random(5, 15),
+                            math.random(-5, 5)
+                        )
+                        self:TweenTo(enemyPos * CFrame.new(offset))
+                    else
+                        self:TweenTo(enemyPos * CFrame.new(0, 15, 0))
+                    end
+                    
+                    -- Equipar arma
+                    local weapons = Player.Backpack:GetChildren()
+                    if #weapons > 0 then
+                        self:EquipWeapon(weapons[1].Name)
+                    end
+                    
+                    -- Atacar
+                    repeat
+                        wait(0.1)
+                        if enemy and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                            -- Anti-ban: variação de ataque
+                            LBHub.AntiBan:RandomizeAttackPattern()
+                            
+                            -- Ataque básico
+                            game:GetService("VirtualUser"):CaptureController()
+                            game:GetService("VirtualUser"):Button1Down(Vector2.new(1, 1))
+                        end
+                    until not enemy or enemy.Humanoid.Health <= 0 or not LBHub.IsRunning
+                    
+                    LBHub.Stats.QuestsCompleted = LBHub.Stats.QuestsCompleted + 1
+                end
+            end)
+            
+            wait(0.1)
         end
     end)
 end
 
-function UI:Initialize()
-    self:CreateMainUI()
-    self:UpdateStatus()
-    print("🎨 Interface LoboFire Hub carregada (Seliware Mode)!")
+-- ════════════════════════════════════════════════════════════════
+-- AUTO FARM MASTERY
+-- ════════════════════════════════════════════════════════════════
+
+function LBHub:FarmMastery()
+    if not LBHub.Config.AutoFarmMastery then return end
+    
+    spawn(function()
+        while LBHub.IsRunning do
+            pcall(function()
+                LBHub.CurrentTask = "Farmando Mastery"
+                
+                -- Farm fruit mastery
+                if LBHub.Config.FarmFruitMastery then
+                    local fruit = Player.Character:FindFirstChildOfClass("Tool")
+                    if fruit and fruit:FindFirstChild("RemoteFunctionShoot") then
+                        self:EquipWeapon(fruit.Name)
+                        
+                        local enemy = self:GetNearestEnemy()
+                        if enemy then
+                            -- Usar habilidade da fruta
+                            local args = {
+                                [1] = "Stomp"
+                            }
+                            fruit.RemoteFunctionShoot:InvokeServer(unpack(args))
+                        end
+                    end
+                end
+                
+                wait(1)
+            end)
+        end
+    end)
 end
 
--- ═══════════════════════════════════════════════════════════
--- INICIALIZAÇÃO PRINCIPAL
--- ═══════════════════════════════════════════════════════════
+-- ════════════════════════════════════════════════════════════════
+-- AUTO BOSS FARM
+-- ════════════════════════════════════════════════════════════════
 
-local function Initialize()
-    print("═══════════════════════════════════════════════════")
-    print("           🔥 LOBOFIRE HUB SELIWARE v1.0.0")
-    print("═══════════════════════════════════════════════════")
+function LBHub:FarmBoss()
+    if not LBHub.Config.AutoFarmBoss then return end
     
-    -- Aguarda o personagem carregar
-    if not Player.Character then
-        Player.CharacterAdded:Wait()
-    end
+    local bossList = {
+        "Saber Expert",
+        "The Gorilla King",
+        "Bobby",
+        "Yeti",
+        "Mob Leader",
+        "Vice Admiral",
+        "Warden",
+        "Chief Warden",
+        "Swan",
+        "rip_indra True Form",
+        "Longma",
+        "Soul Reaper",
+    }
     
-    wait(1)
-    
-    -- Inicializa módulos
-    AntiBan:Initialize()
-    Farm:Initialize()
-    UI:Initialize()
-    
-    Notify("🔥 LoboFire Hub", "Carregado com sucesso! Pronto para farmar.", 5)
-    
-    print("═══════════════════════════════════════════════════")
-    print("✓ Todos os sistemas operacionais!")
-    print("✓ Clique em 'INICIAR FARM' para começar")
-    print("═══════════════════════════════════════════════════")
+    spawn(function()
+        while LBHub.IsRunning do
+            pcall(function()
+                for _, bossName in pairs(bossList) do
+                    local boss = game:GetService("Workspace").Enemies:FindFirstChild(bossName)
+                    if boss and boss:FindFirstChild("HumanoidRootPart") and boss.Humanoid.Health > 0 then
+                        LBHub.CurrentTask = "Derrotando Boss: " .. bossName
+                        
+                        repeat
+                            wait(0.1)
+                            self:TweenTo(boss.HumanoidRootPart.CFrame * CFrame.new(0, 20, 0))
+                            
+                            -- Equipar melhor arma
+                            local weapons = Player.Backpack:GetChildren()
+                            if #weapons > 0 then
+                                self:EquipWeapon(weapons[1].Name)
+                            end
+                            
+                            -- Atacar
+                            game:GetService("VirtualUser"):Button1Down(Vector2.new(1, 1))
+                            
+                            LBHub.AntiBan:RandomizeAttackPattern()
+                        until not boss or boss.Humanoid.Health <= 0 or not LBHub.IsRunning
+                        
+                        LBHub.Stats.BossesDefeated = LBHub.Stats.BossesDefeated + 1
+                        self:Notify("Boss Derrotado!", bossName .. " foi derrotado!", 3)
+                    end
+                end
+            end)
+            wait(2)
+        end
+    end)
 end
 
--- Execução com proteção de erro
-pcall(Initialize)
+-- ════════════════════════════════════════════════════════════════
+-- AUTO COLLECT FRUITS
+-- ════════════════════════════════════════════════════════════════
 
+function LBHub:CollectFruits()
+    if not LBHub.Config.AutoCollectFruit then return end
+    
+    spawn(function()
+        while LBHub.IsRunning do
+            pcall(function()
+                for _, fruit in pairs(game:GetService("Workspace"):GetChildren()) do
+                    if fruit.Name:find("Fruit") and fruit:FindFirstChild("Handle") then
+                        LBHub.CurrentTask = "Coletando Fruta: " .. fruit.Name
+                        
+                        self:TweenTo(fruit.Handle.CFrame)
+                        wait(0.5)
+                        
+                        -- Tentar pegar
+                        if fruit:FindFirstChild("ProximityPrompt") then
+                            fireproximityprompt(fruit.ProximityPrompt)
+                        end
+                        
+                        LBHub.Stats.FruitsCollected = LBHub.Stats.FruitsCollected + 1
+                        self:Notify("Fruta Coletada!", fruit.Name, 2)
+                        
+                        wait(1)
+                    end
+                end
+            end)
+            wait(5)
+        end
+    end)
+end
+
+-- ════════════════════════════════════════════════════════════════
+-- AUTO SEA EVENTS
+-- ════════════════════════════════════════════════════════════════
+
+function LBHub:SeaEvents()
+    if not LBHub.Config.AutoSeaEvent then return end
+    
+    spawn(function()
+        while LBHub.IsRunning do
+            pcall(function()
+                LBHub.CurrentTask = "Procurando Sea Events"
+                
+                -- Ship Raid, Rough Sea, etc
+                local seaEvents = game:GetService("Workspace").SeaBeasts:GetChildren()
+                for _, event in pairs(seaEvents) do
+                    if event:FindFirstChild("HumanoidRootPart") and event.Humanoid.Health > 0 then
+                        LBHub.CurrentTask = "Sea Event: " .. event.Name
+                        
+                        repeat
+                            wait(0.1)
+                            self:TweenTo(event.HumanoidRootPart.CFrame)
+                            game:GetService("VirtualUser"):Button1Down(Vector2.new(1, 1))
+                        until not event or event.Humanoid.Health <= 0 or not LBHub.IsRunning
+                    end
+                end
+            end)
+            wait(3)
+        end
+    end)
+end
+
+-- ════════════════════════════════════════════════════════════════
+-- GUI / INTERFACE
+-- ════════════════════════════════════════════════════════════════
+
+function LBHub:CreateGUI()
+    local ScreenGui = Instance.new("ScreenGui")
+    local MainFrame = Instance.new("Frame")
+    local Title = Instance.new("TextLabel")
+    local StatusLabel = Instance.new("TextLabel")
+    local StatsFrame = Instance.new("Frame")
+    
+    ScreenGui.Name = "LBHubKaitun"
+    ScreenGui.Parent = game.CoreGui
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    MainFrame.Parent = ScreenGui
+    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Position = UDim2.new(0.02, 0, 0.3, 0)
+    MainFrame.Size = UDim2.new(0, 300, 0, 250)
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    
+    -- Corner
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 10)
+    Corner.Parent = MainFrame
+    
+    -- Title
+    Title.Parent = MainFrame
+    Title.BackgroundTransparency = 1
+    Title.Size = UDim2.new(1, 0, 0, 40)
+    Title.Font = Enum.Font.GothamBold
+    Title.Text = "🐺 LB HUB KAITUN v2.0"
+    Title.TextColor3 = Color3.fromRGB(138, 43, 226)
+    Title.TextSize = 18
+    
+    -- Status
+    StatusLabel.Parent = MainFrame
+    StatusLabel.BackgroundTransparency = 1
+    StatusLabel.Position = UDim2.new(0, 10, 0, 50)
+    StatusLabel.Size = UDim2.new(1, -20, 0, 30)
+    StatusLabel.Font = Enum.Font.Gotham
+    StatusLabel.Text = "Status: Iniciando..."
+    StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    StatusLabel.TextSize = 14
+    StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- Stats Display
+    StatsFrame.Parent = MainFrame
+    StatsFrame.BackgroundTransparency = 1
+    StatsFrame.Position = UDim2.new(0, 10, 0, 90)
+    StatsFrame.Size = UDim2.new(1, -20, 1, -100)
+    
+    local statsText = Instance.new("TextLabel")
+    statsText.Parent = StatsFrame
+    statsText.BackgroundTransparency = 1
+    statsText.Size = UDim2.new(1, 0, 1, 0)
+    statsText.Font = Enum.Font.Gotham
+    statsText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    statsText.TextSize = 12
+    statsText.TextXAlignment = Enum.TextXAlignment.Left
+    statsText.TextYAlignment = Enum.TextYAlignment.Top
+    
+    -- Update Loop
+    spawn(function()
+        while wait(1) do
+            LBHub.Stats.Runtime = tick() - LBHub.Stats.StartTime
+            
+            StatusLabel.Text = "Status: " .. LBHub.CurrentTask
+            
+            statsText.Text = string.format(
+                "Level: %d\nBeli: %s\nFragmentos: %d\nQuests: %d\nBosses: %d\nFrutas: %d\nTempo: %s",
+                Player.Data.Level.Value,
+                tostring(Player.Data.Beli.Value),
+                Player.Data.Fragments.Value,
+                LBHub.Stats.QuestsCompleted,
+                LBHub.Stats.BossesDefeated,
+                LBHub.Stats.FruitsCollected,
+                string.format("%02d:%02d:%02d", 
+                    math.floor(LBHub.Stats.Runtime / 3600),
+                    math.floor(LBHub.Stats.Runtime / 60) % 60,
+                    math.floor(LBHub.Stats.Runtime) % 60
+                )
+            )
+        end
+    end)
+end
+
+-- ════════════════════════════════════════════════════════════════
+-- INICIALIZAÇÃO
+-- ════════════════════════════════════════════════════════════════
+
+function LBHub:Init()
+    local loadTime = tick() - self.LoadTime
+    
+    print("════════════════════════════════════════")
+    print("🐺 LB HUB KAITUN v" .. self.Version)
+    print("Tempo de carregamento: " .. string.format("%.2f", loadTime) .. "s")
+    print("════════════════════════════════════════")
+    
+    -- Anti-Ban System
+    LBHub.AntiBan:Init()
+    
+    -- Create GUI
+    self:CreateGUI()
+    
+    -- Notification
+    self:Notify("Carregado!", "LB Hub Kaitu
