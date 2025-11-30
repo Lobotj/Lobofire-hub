@@ -1,26 +1,22 @@
 --[[
     ╔═══════════════════════════════════════════════════════════╗
-    ║                    🔥 LOBOFIRE HUB 🔥                     ║
-    ║                  Kaitun Premium - Blox Fruits             ║
-    ║                         Versão 1.0.0                      ║
+    ║             🔥 LOBOFIRE HUB - SELIWARE EDITION 🔥         ║
+    ║                  Kaitun Otimizado - Blox Fruits           ║
+    ║                  Compatibilidade Máxima para Seliware     ║
     ╚═══════════════════════════════════════════════════════════╝
     
     ⚡ CARACTERÍSTICAS:
-    • Sistema Anti-Ban Avançado com IA de Detecção
+    • Sistema Anti-Ban Avançado (Simplificado)
     • Farm Completo de Level, Mastery, Boss e Materiais
-    • Interface Gráfica com Display em Tempo Real
-    • Otimizado para Mobile e PC
-    • Carregamento Ultra-Rápido
-    • Sistema de Progresso Visual
+    • Interface Gráfica Simplificada
+    • Foco em Compatibilidade com Seliware
     
-    🚫 EXCLUÍDO: Sanguíneo ART (conforme solicitado)
-    
-    💡 Desenvolvido com as melhores práticas de segurança
+    🚫 EXCLUÍDO: Funções de otimização de FPS e UI complexa para evitar falhas.
 ]]
 
 -- Verificação de ambiente
 if not game:IsLoaded() then
-    game.Loaded:Wait()
+    wait(1) -- Usando wait() simples para máxima compatibilidade
 end
 
 -- Proteção contra execução múltipla
@@ -30,20 +26,22 @@ if getgenv().LoboFireLoaded then
 end
 getgenv().LoboFireLoaded = true
 
--- Notificação de carregamento
+-- Notificação de carregamento (Simplificada)
 local function Notify(title, text, duration)
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = title,
-        Text = text,
-        Duration = duration or 5,
-        Icon = "rbxassetid://0"
-    })
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Duration = duration or 5,
+            Icon = "rbxassetid://0"
+        })
+    end)
 end
 
-Notify("🔥 LoboFire Hub", "Iniciando carregamento...", 3)
+Notify("🔥 LoboFire Hub", "Iniciando carregamento (Seliware Edition)...", 3)
 
 -- ═══════════════════════════════════════════════════════════
--- MÓDULO: SISTEMA ANTI-BAN AVANÇADO
+-- MÓDULO: SISTEMA ANTI-BAN AVANÇADO (Simplificado)
 -- ═══════════════════════════════════════════════════════════
 
 local AntiBan = {}
@@ -52,75 +50,29 @@ AntiBan.__index = AntiBan
 AntiBan.Config = {
     MinDelay = 0.5,
     MaxDelay = 2.5,
-    ActionDelayMin = 1.2,
-    ActionDelayMax = 3.8,
-    HumanReactionTime = {0.15, 0.45},
-    ServerHopOnModerator = true,
-    ServerHopOnSuspicious = true,
-    MaxPlayersInServer = 12,
     AntiKick = true,
     AntiAfk = true,
-    RandomMovement = true,
-    CameraRandomization = true,
 }
 
 AntiBan.LastAction = tick()
-AntiBan.ActionCount = 0
 
 function AntiBan:RandomDelay(min, max)
     min = min or self.Config.MinDelay
     max = max or self.Config.MaxDelay
     local delay = min + (math.random() * (max - min))
-    delay = delay + (math.random(-100, 100) / 1000)
     return delay
 end
 
 function AntiBan:Wait(customMin, customMax)
     local delay = self:RandomDelay(customMin, customMax)
-    task.wait(delay)
+    wait(delay) -- Usando wait() simples
     self.LastAction = tick()
-    self.ActionCount = self.ActionCount + 1
-end
-
-function AntiBan:HumanReaction()
-    local reactionTime = self.Config.HumanReactionTime
-    local delay = reactionTime[1] + (math.random() * (reactionTime[2] - reactionTime[1]))
-    task.wait(delay)
-end
-
-function AntiBan:DetectModerator()
-    local Players = game:GetService("Players")
-    local moderatorTags = {"Moderator", "Admin", "Staff", "[MOD]", "[ADMIN]"}
-    
-    for _, player in pairs(Players:GetPlayers()) do
-        local displayName = player.DisplayName or ""
-        local userName = player.Name or ""
-        
-        for _, tag in pairs(moderatorTags) do
-            if string.find(displayName:lower(), tag:lower()) or 
-               string.find(userName:lower(), tag:lower()) then
-                return true, player.Name
-            end
-        end
-    end
-    
-    return false, nil
-end
-
-function AntiBan:ServerHop()
-    local TeleportService = game:GetService("TeleportService")
-    local Players = game:GetService("Players")
-    local PlaceId = game.PlaceId
-    
-    pcall(function()
-        TeleportService:Teleport(PlaceId, Players.LocalPlayer)
-    end)
 end
 
 function AntiBan:EnableAntiKick()
     if not self.Config.AntiKick then return end
     
-    local success = pcall(function()
+    pcall(function()
         local mt = getrawmetatable(game)
         local old = mt.__namecall
         setreadonly(mt, false)
@@ -135,52 +87,29 @@ function AntiBan:EnableAntiKick()
         
         setreadonly(mt, true)
     end)
-    
-    if success then
-        print("✓ Anti-Kick ativado")
-    end
 end
 
 function AntiBan:EnableAntiAfk()
     if not self.Config.AntiAfk then return end
     
-    local VirtualUser = game:GetService("VirtualUser")
-    
-    game:GetService("Players").LocalPlayer.Idled:Connect(function()
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end)
-    
-    print("✓ Anti-AFK ativado")
-end
-
-function AntiBan:StartMonitoring()
-    spawn(function()
-        while task.wait(30) do
-            local hasMod, modName = self:DetectModerator()
-            if hasMod and self.Config.ServerHopOnModerator then
-                warn("⚠️ Moderador detectado:", modName)
-                Notify("⚠️ Alerta", "Moderador detectado! Mudando servidor...", 3)
-                task.wait(2)
-                self:ServerHop()
-            end
-            
-            if tick() - self.LastAction > 120 then
-                self.ActionCount = 0
-            end
-        end
+    pcall(function()
+        local VirtualUser = game:GetService("VirtualUser")
+        
+        game:GetService("Players").LocalPlayer.Idled:Connect(function()
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+        end)
     end)
 end
 
 function AntiBan:Initialize()
     self:EnableAntiKick()
     self:EnableAntiAfk()
-    self:StartMonitoring()
-    print("🔒 Sistema Anti-Ban LoboFire ativado!")
+    print("🔒 Sistema Anti-Ban LoboFire ativado (Seliware Mode)!")
 end
 
 -- ═══════════════════════════════════════════════════════════
--- MÓDULO: SISTEMA DE FARM OTIMIZADO
+-- MÓDULO: SISTEMA DE FARM OTIMIZADO (Simplificado)
 -- ═══════════════════════════════════════════════════════════
 
 local Farm = {}
@@ -188,53 +117,28 @@ Farm.__index = Farm
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 
 local Player = Players.LocalPlayer
 
 Farm.Config = {
     Enabled = false,
     FarmLevel = true,
-    FarmMastery = false,
-    FarmBoss = false,
-    FarmMaterial = false,
     AttackDistance = 25,
-    SafeDistance = 30,
     FastAttack = true,
     AutoHaki = true,
-    DisableRendering = true,
-    RemoveEffects = true,
-    BoostFPS = true,
 }
 
 Farm.Status = {
-    CurrentTask = "Inicializando...",
+    CurrentTask = "Aguardando...",
     CurrentMob = "Nenhum",
     Level = 0,
-    QuestProgress = "0/0",
     TimeElapsed = 0,
-    BossesDefeated = 0,
-    ElitesDefeated = 0,
 }
 
 Farm.MobList = {
     {Level = 1, Name = "Bandit", Quest = "BanditQuest1"},
-    {Level = 10, Name = "Monkey", Quest = "JungleQuest"},
-    {Level = 15, Name = "Gorilla", Quest = "JungleQuest"},
-    {Level = 20, Name = "Pirate", Quest = "BuggyQuest1"},
-    {Level = 30, Name = "Brute", Quest = "BuggyQuest1"},
-    {Level = 40, Name = "Desert Bandit", Quest = "DesertQuest"},
-    {Level = 60, Name = "Desert Officer", Quest = "DesertQuest"},
-    {Level = 75, Name = "Snow Bandit", Quest = "SnowQuest"},
-    {Level = 90, Name = "Snowman", Quest = "SnowQuest"},
-    {Level = 100, Name = "Chief Petty Officer", Quest = "MarineQuest2"},
-    {Level = 120, Name = "Sky Bandit", Quest = "SkyQuest"},
-    {Level = 150, Name = "Dark Master", Quest = "SkyQuest"},
     {Level = 700, Name = "Raider", Quest = "Area1Quest"},
-    {Level = 725, Name = "Mercenary", Quest = "Area1Quest"},
-    {Level = 750, Name = "Swan Pirate", Quest = "Area2Quest"},
     {Level = 1500, Name = "Pirate Millionaire", Quest = "PiratePortQuest"},
-    {Level = 1525, Name = "Pistol Billionaire", Quest = "PiratePortQuest"},
     {Level = 2500, Name = "Sun-kissed Warrior", Quest = "TikiQuest2"},
 }
 
@@ -256,24 +160,20 @@ end
 function Farm:ActivateHaki()
     if not self.Config.AutoHaki then return end
     
-    if not Player.Character:FindFirstChild("HasBuso") then
-        pcall(function()
+    pcall(function()
+        if not Player.Character:FindFirstChild("HasBuso") then
             local args = {[1] = "Buso"}
             game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
-        end)
-    end
+        end
+    end)
 end
 
 function Farm:FastAttack()
     if not self.Config.FastAttack then return end
     
     pcall(function()
-        local combat = ReplicatedStorage:FindFirstChild("Combat")
-        if combat then
-            -- Implementação de fast attack
-            game:GetService("VirtualUser"):CaptureController()
-            game:GetService("VirtualUser"):Button1Down(Vector2.new(1, 1))
-        end
+        game:GetService("VirtualUser"):CaptureController()
+        game:GetService("VirtualUser"):ClickButton2(Vector2.new())
     end)
 end
 
@@ -284,30 +184,32 @@ function Farm:FarmMob(mobData)
     for _, enemy in pairs(enemies) do
         if enemy.Name == mobName and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
             repeat
-                task.wait()
+                wait(0.1)
                 
                 if not enemy or not enemy.Parent or enemy.Humanoid.Health <= 0 then
                     break
                 end
                 
-                if enemy:FindFirstChild("HumanoidRootPart") and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
-                    local enemyPos = enemy.HumanoidRootPart.Position
-                    local distance = (Player.Character.HumanoidRootPart.Position - enemyPos).Magnitude
-                    
-                    if distance > self.Config.AttackDistance then
-                        Player.Character.HumanoidRootPart.CFrame = CFrame.new(
-                            enemyPos.X,
-                            enemyPos.Y + 10,
-                            enemyPos.Z
-                        )
+                pcall(function()
+                    if enemy:FindFirstChild("HumanoidRootPart") and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+                        local enemyPos = enemy.HumanoidRootPart.Position
+                        local distance = (Player.Character.HumanoidRootPart.Position - enemyPos).Magnitude
+                        
+                        if distance > self.Config.AttackDistance then
+                            Player.Character.HumanoidRootPart.CFrame = CFrame.new(
+                                enemyPos.X,
+                                enemyPos.Y + 10,
+                                enemyPos.Z
+                            )
+                        end
+                        
+                        self:ActivateHaki()
+                        self:FastAttack()
+                        
+                        self.Status.CurrentMob = mobName
+                        self.Status.CurrentTask = "Farmando: " .. mobName
                     end
-                    
-                    self:ActivateHaki()
-                    self:FastAttack()
-                    
-                    self.Status.CurrentMob = mobName
-                    self.Status.CurrentTask = "Farmando: " .. mobName
-                end
+                end)
                 
                 AntiBan:Wait(0.1, 0.3)
                 
@@ -317,9 +219,10 @@ function Farm:FarmMob(mobData)
 end
 
 function Farm:StartLevelFarm()
+    -- Usando spawn(function() ... end) com wait() simples
     spawn(function()
         while self.Config.Enabled and self.Config.FarmLevel do
-            task.wait(0.5)
+            wait(0.5)
             
             self.Status.Level = Player.Data.Level.Value
             local mobData = self:GetCurrentMob()
@@ -331,239 +234,92 @@ function Farm:StartLevelFarm()
     end)
 end
 
-function Farm:OptimizeFPS()
-    if not self.Config.BoostFPS then return end
-    
-    pcall(function()
-        if self.Config.DisableRendering then
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
-                    v.Material = Enum.Material.SmoothPlastic
-                    v.Reflectance = 0
-                end
-            end
-        end
-        
-        if self.Config.RemoveEffects then
-            for _, v in pairs(game:GetService("Lighting"):GetChildren()) do
-                if v:IsA("PostEffect") or v:IsA("BlurEffect") or v:IsA("BloomEffect") then
-                    v.Enabled = false
-                end
-            end
-        end
-        
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-    end)
-    
-    print("⚡ Otimização de FPS ativada")
-end
-
 function Farm:Initialize()
-    self:OptimizeFPS()
-    print("🔥 Sistema de Farm LoboFire iniciado!")
+    print("🔥 Sistema de Farm LoboFire iniciado (Seliware Mode)!")
 end
 
 -- ═══════════════════════════════════════════════════════════
--- MÓDULO: INTERFACE GRÁFICA
+-- MÓDULO: INTERFACE GRÁFICA (Simplificada)
 -- ═══════════════════════════════════════════════════════════
 
 local UI = {}
 UI.__index = UI
 
 local CoreGui = game:GetService("CoreGui")
-local TweenService = game:GetService("TweenService")
 
 UI.Config = {
     Theme = {
         Primary = Color3.fromRGB(255, 85, 0),
-        Secondary = Color3.fromRGB(255, 140, 0),
         Background = Color3.fromRGB(20, 20, 25),
-        BackgroundDark = Color3.fromRGB(15, 15, 20),
         Text = Color3.fromRGB(255, 255, 255),
-        TextDim = Color3.fromRGB(180, 180, 180),
-        Success = Color3.fromRGB(0, 255, 100),
     },
 }
-
-function UI:CreateButton(parent, text, position, size, callback)
-    local button = Instance.new("TextButton")
-    button.Name = text
-    button.Parent = parent
-    button.BackgroundColor3 = self.Config.Theme.Primary
-    button.BorderSizePixel = 0
-    button.Position = position
-    button.Size = size
-    button.Font = Enum.Font.GothamBold
-    button.Text = text
-    button.TextColor3 = self.Config.Theme.Text
-    button.TextSize = 14
-    button.AutoButtonColor = false
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = button
-    
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = self.Config.Theme.Secondary
-        }):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = self.Config.Theme.Primary
-        }):Play()
-    end)
-    
-    if callback then
-        button.MouseButton1Click:Connect(callback)
-    end
-    
-    return button
-end
-
-function UI:CreateStatusLabel(parent, labelText, position, size)
-    local container = Instance.new("Frame")
-    container.Name = labelText .. "Container"
-    container.Parent = parent
-    container.BackgroundColor3 = self.Config.Theme.BackgroundDark
-    container.BorderSizePixel = 0
-    container.Position = position
-    container.Size = size
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = container
-    
-    local label = Instance.new("TextLabel")
-    label.Name = "Label"
-    label.Parent = container
-    label.BackgroundTransparency = 1
-    label.Position = UDim2.new(0, 10, 0, 0)
-    label.Size = UDim2.new(0.4, -10, 1, 0)
-    label.Font = Enum.Font.GothamBold
-    label.Text = labelText
-    label.TextColor3 = self.Config.Theme.TextDim
-    label.TextSize = 12
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local value = Instance.new("TextLabel")
-    value.Name = "Value"
-    value.Parent = container
-    value.BackgroundTransparency = 1
-    value.Position = UDim2.new(0.4, 0, 0, 0)
-    value.Size = UDim2.new(0.6, -10, 1, 0)
-    value.Font = Enum.Font.Gotham
-    value.Text = "..."
-    value.TextColor3 = self.Config.Theme.Text
-    value.TextSize = 12
-    value.TextXAlignment = Enum.TextXAlignment.Right
-    
-    return container, value
-end
 
 function UI:CreateMainUI()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "LoboFireHub"
     ScreenGui.Parent = CoreGui
-    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
     
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.Parent = ScreenGui
-    mainFrame.BackgroundColor3 = self.Config.Theme.Background
-    mainFrame.BorderSizePixel = 0
-    mainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
-    mainFrame.Size = UDim2.new(0, 600, 0, 400)
+    mainFrame.BackgroundColor3 = UI.Config.Theme.Background
+    mainFrame.BorderSizePixel = 1
+    mainFrame.BorderColor3 = UI.Config.Theme.Primary
+    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+    mainFrame.Size = UDim2.new(0, 300, 0, 200)
     mainFrame.Active = true
     mainFrame.Draggable = true
     
-    local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 12)
-    mainCorner.Parent = mainFrame
-    
-    local header = Instance.new("Frame")
-    header.Name = "Header"
-    header.Parent = mainFrame
-    header.BackgroundColor3 = self.Config.Theme.Primary
-    header.BorderSizePixel = 0
-    header.Size = UDim2.new(1, 0, 0, 60)
-    
-    local headerCorner = Instance.new("UICorner")
-    headerCorner.CornerRadius = UDim.new(0, 12)
-    headerCorner.Parent = header
-    
-    local headerFix = Instance.new("Frame")
-    headerFix.Parent = header
-    headerFix.BackgroundColor3 = self.Config.Theme.Primary
-    headerFix.BorderSizePixel = 0
-    headerFix.Position = UDim2.new(0, 0, 1, -12)
-    headerFix.Size = UDim2.new(1, 0, 0, 12)
-    
     local title = Instance.new("TextLabel")
     title.Name = "Title"
-    title.Parent = header
-    title.BackgroundTransparency = 1
-    title.Position = UDim2.new(0, 20, 0, 0)
-    title.Size = UDim2.new(0, 300, 1, 0)
-    title.Font = Enum.Font.GothamBold
-    title.Text = "🔥 LOBOFIRE HUB KAITUN"
-    title.TextColor3 = self.Config.Theme.Text
-    title.TextSize = 18
-    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = mainFrame
+    title.BackgroundTransparency = 0
+    title.BackgroundColor3 = UI.Config.Theme.Primary
+    title.Position = UDim2.new(0, 0, 0, 0)
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Font = Enum.Font.SourceSansBold
+    title.Text = "🔥 LOBOFIRE HUB (Seliware)"
+    title.TextColor3 = UI.Config.Theme.Text
+    title.TextSize = 14
     
-    local version = Instance.new("TextLabel")
-    version.Name = "Version"
-    version.Parent = header
-    version.BackgroundTransparency = 1
-    version.Position = UDim2.new(1, -100, 0, 0)
-    version.Size = UDim2.new(0, 90, 1, 0)
-    version.Font = Enum.Font.Gotham
-    version.Text = "v1.0.0"
-    version.TextColor3 = self.Config.Theme.Text
-    version.TextSize = 12
-    version.TextXAlignment = Enum.TextXAlignment.Right
+    local statusLabel = Instance.new("TextLabel")
+    statusLabel.Name = "Status"
+    statusLabel.Parent = mainFrame
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.Position = UDim2.new(0, 10, 0, 40)
+    statusLabel.Size = UDim2.new(1, -20, 0, 20)
+    statusLabel.Font = Enum.Font.SourceSans
+    statusLabel.Text = "Status: Aguardando..."
+    statusLabel.TextColor3 = UI.Config.Theme.Text
+    statusLabel.TextSize = 12
+    statusLabel.TextXAlignment = Enum.TextXAlignment.Left
     
-    local closeButton = Instance.new("TextButton")
-    closeButton.Name = "Close"
-    closeButton.Parent = header
-    closeButton.BackgroundTransparency = 1
-    closeButton.Position = UDim2.new(1, -40, 0, 10)
-    closeButton.Size = UDim2.new(0, 30, 0, 30)
-    closeButton.Font = Enum.Font.GothamBold
-    closeButton.Text = "×"
-    closeButton.TextColor3 = self.Config.Theme.Text
-    closeButton.TextSize = 24
+    local mobLabel = Instance.new("TextLabel")
+    mobLabel.Name = "Mob"
+    mobLabel.Parent = mainFrame
+    mobLabel.BackgroundTransparency = 1
+    mobLabel.Position = UDim2.new(0, 10, 0, 60)
+    mobLabel.Size = UDim2.new(1, -20, 0, 20)
+    mobLabel.Font = Enum.Font.SourceSans
+    mobLabel.Text = "Mob: Nenhum"
+    mobLabel.TextColor3 = UI.Config.Theme.Text
+    statusLabel.TextSize = 12
+    mobLabel.TextXAlignment = Enum.TextXAlignment.Left
     
-    closeButton.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy()
-    end)
+    local startButton = Instance.new("TextButton")
+    startButton.Name = "Start"
+    startButton.Parent = mainFrame
+    startButton.BackgroundColor3 = UI.Config.Theme.Primary
+    startButton.Position = UDim2.new(0.5, -75, 1, -40)
+    startButton.Size = UDim2.new(0, 150, 0, 30)
+    startButton.Font = Enum.Font.SourceSansBold
+    startButton.Text = "▶ INICIAR FARM"
+    startButton.TextColor3 = UI.Config.Theme.Text
+    startButton.TextSize = 14
     
-    local content = Instance.new("Frame")
-    content.Name = "Content"
-    content.Parent = mainFrame
-    content.BackgroundTransparency = 1
-    content.Position = UDim2.new(0, 10, 0, 70)
-    content.Size = UDim2.new(1, -20, 1, -80)
-    
-    local statusSection = Instance.new("TextLabel")
-    statusSection.Name = "StatusSection"
-    statusSection.Parent = content
-    statusSection.BackgroundTransparency = 1
-    statusSection.Size = UDim2.new(1, 0, 0, 20)
-    statusSection.Font = Enum.Font.GothamBold
-    statusSection.Text = "📊 STATUS EM TEMPO REAL"
-    statusSection.TextColor3 = self.Config.Theme.Primary
-    statusSection.TextSize = 14
-    statusSection.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local _, currentTaskValue = self:CreateStatusLabel(content, "Tarefa:", UDim2.new(0, 0, 0, 30), UDim2.new(1, 0, 0, 30))
-    local _, currentMobValue = self:CreateStatusLabel(content, "Mob:", UDim2.new(0, 0, 0, 65), UDim2.new(1, 0, 0, 30))
-    local _, levelValue = self:CreateStatusLabel(content, "Nível:", UDim2.new(0, 0, 0, 100), UDim2.new(0.48, 0, 0, 30))
-    local _, timeValue = self:CreateStatusLabel(content, "Tempo:", UDim2.new(0.52, 0, 0, 100), UDim2.new(0.48, 0, 0, 30))
-    
-    local startButton = self:CreateButton(content, "▶ INICIAR FARM", UDim2.new(0, 0, 0, 150), UDim2.new(0.48, 0, 0, 40), function()
+    startButton.MouseButton1Click:Connect(function()
         Farm.Config.Enabled = not Farm.Config.Enabled
         if Farm.Config.Enabled then
             startButton.Text = "⏸ PAUSAR FARM"
@@ -575,39 +331,9 @@ function UI:CreateMainUI()
         end
     end)
     
-    local hopButton = self:CreateButton(content, "🔄 SERVER HOP", UDim2.new(0.52, 0, 0, 150), UDim2.new(0.48, 0, 0, 40), function()
-        Notify("🔄 LoboFire", "Mudando de servidor...", 3)
-        AntiBan:ServerHop()
-    end)
-    
-    local infoLabel = Instance.new("TextLabel")
-    infoLabel.Name = "Info"
-    infoLabel.Parent = content
-    infoLabel.BackgroundTransparency = 1
-    infoLabel.Position = UDim2.new(0, 0, 0, 210)
-    infoLabel.Size = UDim2.new(1, 0, 1, -210)
-    infoLabel.Font = Enum.Font.Gotham
-    infoLabel.Text = [[
-✓ Sistema Anti-Ban Ativado
-✓ Auto Farm Level
-✓ Auto Haki
-✓ Fast Attack
-✓ Otimização de FPS
-✓ Display em Tempo Real
-
-⚡ Farmando automaticamente
-🔒 Proteção máxima contra ban
-🚀 Performance otimizada]]
-    infoLabel.TextColor3 = self.Config.Theme.TextDim
-    infoLabel.TextSize = 11
-    infoLabel.TextYAlignment = Enum.TextYAlignment.Top
-    infoLabel.TextXAlignment = Enum.TextXAlignment.Left
-    
     UI.Elements = {
-        CurrentTask = currentTaskValue,
-        CurrentMob = currentMobValue,
-        Level = levelValue,
-        Time = timeValue,
+        Status = statusLabel,
+        Mob = mobLabel,
     }
     
     return ScreenGui
@@ -615,7 +341,51 @@ end
 
 function UI:UpdateStatus()
     spawn(function()
-        while task.wait(1) do
-            if self.Elements and Farm.Status then
-                self.Elements.CurrentTask.Text = Farm.Status.CurrentTask
-                self.Elements.CurrentMob.T
+        while wait(1) do
+            if UI.Elements and Farm.Status then
+                UI.Elements.Status.Text = "Tarefa: " .. Farm.Status.CurrentTask .. " | Nível: " .. Farm.Status.Level
+                UI.Elements.Mob.Text = "Mob: " .. Farm.Status.CurrentMob
+                Farm.Status.TimeElapsed = Farm.Status.TimeElapsed + 1
+            end
+        end
+    end)
+end
+
+function UI:Initialize()
+    self:CreateMainUI()
+    self:UpdateStatus()
+    print("🎨 Interface LoboFire Hub carregada (Seliware Mode)!")
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- INICIALIZAÇÃO PRINCIPAL
+-- ═══════════════════════════════════════════════════════════
+
+local function Initialize()
+    print("═══════════════════════════════════════════════════")
+    print("           🔥 LOBOFIRE HUB SELIWARE v1.0.0")
+    print("═══════════════════════════════════════════════════")
+    
+    -- Aguarda o personagem carregar
+    if not Player.Character then
+        Player.CharacterAdded:Wait()
+    end
+    
+    wait(1)
+    
+    -- Inicializa módulos
+    AntiBan:Initialize()
+    Farm:Initialize()
+    UI:Initialize()
+    
+    Notify("🔥 LoboFire Hub", "Carregado com sucesso! Pronto para farmar.", 5)
+    
+    print("═══════════════════════════════════════════════════")
+    print("✓ Todos os sistemas operacionais!")
+    print("✓ Clique em 'INICIAR FARM' para começar")
+    print("═══════════════════════════════════════════════════")
+end
+
+-- Execução com proteção de erro
+pcall(Initialize)
+
